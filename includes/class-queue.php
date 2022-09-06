@@ -35,14 +35,14 @@ class queue {
         $wpdb->update($wpdb->prefix.self::$table_name, $data, ['image_id' => $row_id]);
     }
 
-    static function get($id){
+    static function get_pending($status){
         global $wpdb;
 
         $table_name = $wpdb->prefix.self::$table_name;
 
-        $sql = $wpdb->prepare("SELECT * FROM {$table_name} WHERE image_id = %d", $id );
+        $sql = $wpdb->prepare("SELECT * FROM {$table_name} WHERE `status` = %s", $status );
 
-        return $wpdb->get_row($sql, ARRAY_A);
+        return $wpdb->get_results($sql, ARRAY_A);
     }
 
     static function delete($row_id){

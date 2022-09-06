@@ -7,25 +7,70 @@ namespace cpib;
 class bucket {
 
 	private $s3;
+    private $options;
 
 	function __construct() {
+		error_log('bucket uploader running', 0);
+        
 		require ABSPATH . 'vendor/autoload.php';
 
-		$this->s3 = new Aws\S3\S3Client([
+        if (!file_exists( ABSPATH . '/tmp/tmpfile')) {
+			mkdir( ABSPATH .'/tmp/tmpfile');
+		}
+
+        $this->options = get_option('cpib_options');
+		$this->s3 = new \Aws\S3\S3Client([
 			'region'  => 'ap-south-1',
 			'version' => 'latest',
 			'credentials' => [
-				'key'    => get_option('cpib_bucket_access_key'),
-				'secret' => get_option('cpib_bucket_secret_key'),
+				'key'    => $this->options['cpib_bucket_access_key'],
+				'secret' => $this->options['cpib_secret_key'],
 			],
 			'endpoint' => 'https://ap-south-1.linodeobjects.com/'
 		]);
-
-		if (!file_exists( ABSPATH . '/tmp/tmpfile')) {
-			mkdir( ABSPATH .'/tmp/tmpfile');
-		}
 	}
 
+    public function upload( $images ) {
+
+		error_log('uploading image started');
+
+		$json_images = [];
+
+		foreach( $images as $image ) {
+
+			if( empty( $image ) ) { continue; }
+
+            $arrContextOptions=array(
+                "ssl"=>array(
+                    "verify_peer"=>false,
+                    "verify_peer_name"=>false,
+                ),
+            );  
+
+			$filename = basename( $image['image_url'] );
+			$local_path = ABSPATH .'/tmp/tmpfile' . $filename;
+			$file_contents = file_get_contents( $image['image_url'], false, stream_context_create($arrContextOptions) );
+			fopen( $local_path, "w" ) or die( "Error: Unable to open file." );
+			file_put_contents( $local_path, $file_contents );
+
+			$result = $this->s3->putObject([
+				'Bucket' => $this->options['cpib_bucket_name'],
+				'Key'    => 'images/'.$image['post_type'].'/' . $image['property_unique_id']. '/' . $filename,
+				'SourceFile' => $local_path,
+				'ACL' => 'public-read'
+			]);
+
+			if( $result['@metadata']['effectiveUri'] ) {
+				$url = $result['@metadata']['effectiveUri'];
+				$json_images[$image['post_id']][] = $url;
+				error_log( print_r('image uploaded: ' . $url, true), 0);
+			}
+		}
+		error_log('returning json images from ->upload()');
+		return $json_images;
+
+	}
+    
 	// public function list( $property_id ) {
 	// 	//_el('listing images...');
 
@@ -46,43 +91,6 @@ class bucket {
 	// 		return false;
 	// 	}
 	// }
-
-	public function upload( $xml_node ) {
-
-		$json_images = [];
-
-		foreach( $xml_node['images']['img'] as $image ) {
-
-			$image_url = (string) $image['url'];
-
-			if( empty( $image_url ) ) { continue; }
-
-			$filename = basename( $image_url );
-			$local_path = ABSPATH .'/tmp/tmpfile' . $filename;
-			$file_contents = file_get_contents( $image_url );
-			$unique_id = (string) $xml_node['uniqueID'];
-			fopen( $local_path, "w" ) or die( "Error: Unable to open file." );
-			file_put_contents( $local_path, $file_contents );
-
-			$result = $this->s3->putObject([
-				'Bucket' => LINODE_BUCKET,
-				'Key'    => 'images/rental/' . $unique_id. '/' . $filename,
-				'SourceFile' => $local_path,
-				'ACL' => 'public-read'
-			]);
-
-		//	_el('uploaded ' . $filename);
-
-			if( $result['@metadata']['effectiveUri'] ) {
-				$url = $result['@metadata']['effectiveUri'];
-				$json_images[] = $url;
-			}
-
-		}
-		return $json_images;
-
-
-	}
 
 	// public function delete( $images ) {
 	// //	_el('deleting images...');
