@@ -42,6 +42,14 @@ define( 'CUSTOM_POST_IMAGE_BUCKET_VERSION', '1.0.0' );
  * This action is documented in includes/class-custom-post-image-bucket-activator.php
  */
 function activate_custom_post_image_bucket() {
+	$plugin = plugin_basename( __FILE__ ); // 'myplugin'
+    if ( is_plugin_active( 'wp-all-import-pro/wp-all-import-pro.php' ) ) {
+        error_log('plugin is active. Acitivating.', 0);
+    } else {
+        // Plugin was not-active, uh oh, do not allow this plugin to activate
+        deactivate_plugins( $plugin ); // Deactivate 'myplugin'
+		error_log('plugin wp all import not activated. Could not acivate this one');
+    }
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-custom-post-image-bucket-activator.php';
 	Custom_Post_Image_Bucket_Activator::activate();
 }

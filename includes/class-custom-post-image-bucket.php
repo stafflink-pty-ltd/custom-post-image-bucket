@@ -122,6 +122,13 @@ class Custom_Post_Image_Bucket {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-custom-post-image-bucket-public.php';
 
+		/**
+		 * This is used to import the images to the database.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-queue.php';
+
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/wpai-importer-hooks.php';
+
 		$this->loader = new Custom_Post_Image_Bucket_Loader();
 
 	}

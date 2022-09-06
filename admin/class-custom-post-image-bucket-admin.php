@@ -150,6 +150,18 @@ function Custom_Post_Image_Bucket__settings_init() {
             'class'             => 'cpib_row'
         )
     );
+
+	add_settings_field(
+        'cpib_importer_ids',
+        'Comma separated list of WP All Import Ids to activate on',
+        'cpib_import_ids_callback',
+        'cpib',
+        'cpib_section_developers',
+        array(
+            'label_for'         => 'cpib_importer_ids',
+            'class'             => 'cpib_row'
+        )
+    );
 	
 }
 add_action( 'admin_init', 'Custom_Post_Image_Bucket__settings_init' );
@@ -203,6 +215,20 @@ function cpib_bucket_name_callback( $args ) {
 		value="<?php echo $option[$args['label_for']]; ?>">
     <?php
 }
+
+function cpib_import_ids_callback( $args ) {
+    $option = get_option( 'cpib_options' );
+    ?>
+	<input 
+		id="<?php echo esc_attr( $args['label_for'] ); ?>"
+		type="text" 
+		class="regular-text" 
+		name="cpib_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
+		size="50" 
+		value="<?php echo $option[$args['label_for']]; ?>">
+    <?php
+}
+
 
 function cpib_options_page() {
     add_submenu_page(

@@ -15,12 +15,13 @@ $sql =
         `id` int(10) NOT NULL AUTO_INCREMENT,
         `image_id` text NOT NULL,
         `post_id` int(10) NULL,
-        `image_modtime` int(20) NULL,
+        `image_modtime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `image_url` text NOT NULL,
+        `bucket_url` text NOT NULL,
         `property_unique_id` text NOT NULL,
         `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `status` enum('cancel', 'fail', 'pending','done') DEFAULT NULL,
-        `status_message` text NULL, 
+        `post_type` text NULL,
         PRIMARY KEY  (id)
     )
     COLLATE {$wpdb_collate}";
