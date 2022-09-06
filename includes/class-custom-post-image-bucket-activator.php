@@ -30,7 +30,7 @@ class Custom_Post_Image_Bucket_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-
+		require 'db.php';
 	}
 
 }

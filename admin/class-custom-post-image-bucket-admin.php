@@ -101,3 +101,145 @@ class Custom_Post_Image_Bucket_Admin {
 	}
 
 }
+
+/**
+ * custom option and settings
+ */
+function Custom_Post_Image_Bucket__settings_init() {
+
+    register_setting( 'cpib', 'cpib_options' );
+
+    add_settings_section(
+        'cpib_section_developers',
+        __( 'Add your Bucket details here.', 'cpib' ), 'cpib_section_developers_callback',
+        'cpib'
+    );
+
+    add_settings_field(
+        'cpib_bucket_access_key',
+        'Bucket Access Key',
+        'cpib_bucket_access_key_callback',
+        'cpib',
+        'cpib_section_developers',
+        array(
+            'label_for'         => 'cpib_bucket_access_key',
+            'class'             => 'cpib_row'
+        )
+    );
+
+	add_settings_field(
+        'cpib_secret_key',
+        'Bucket Secret Key',
+        'cpib_secret_key_callback',
+        'cpib',
+        'cpib_section_developers',
+        array(
+            'label_for'         => 'cpib_secret_key',
+            'class'             => 'cpib_row'
+        )
+    );
+
+	add_settings_field(
+        'cpib_bucket_name',
+        'Bucket Name',
+        'cpib_bucket_name_callback',
+        'cpib',
+        'cpib_section_developers',
+        array(
+            'label_for'         => 'cpib_bucket_name',
+            'class'             => 'cpib_row'
+        )
+    );
+	
+}
+add_action( 'admin_init', 'Custom_Post_Image_Bucket__settings_init' );
+
+/**
+ * Developers section callback function.
+ *
+ * @param array $args  The settings array, defining title, id, callback.
+ */
+function cpib_section_developers_callback( $args ) {
+    ?>
+    <p id="<?php echo esc_attr( $args['id'] ); ?>"><a href="https://www.linode.com/docs/products/storage/object-storage/get-started/" target="_blank">Don't a key yet? Click here.</a></p>
+    <?php
+}
+
+function cpib_bucket_access_key_callback( $args ) {
+    $option = get_option( 'cpib_options' );
+    ?>
+	<input 
+		id="<?php echo esc_attr( $args['label_for'] ); ?>"
+		type="text" 
+		class="regular-text" 
+		name="cpib_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
+		size="50" 
+		value="<?php echo $option[$args['label_for']]; ?>">
+    <?php
+}
+
+function cpib_secret_key_callback( $args ) {
+    $option = get_option( 'cpib_options' );
+    ?>
+	<input 
+		id="<?php echo esc_attr( $args['label_for'] ); ?>"
+		type="text" 
+		class="regular-text" 
+		name="cpib_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
+		size="50" 
+		value="<?php echo $option[$args['label_for']]; ?>">
+    <?php
+}
+
+function cpib_bucket_name_callback( $args ) {
+    $option = get_option( 'cpib_options' );
+    ?>
+	<input 
+		id="<?php echo esc_attr( $args['label_for'] ); ?>"
+		type="text" 
+		class="regular-text" 
+		name="cpib_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
+		size="50" 
+		value="<?php echo $option[$args['label_for']]; ?>">
+    <?php
+}
+
+function cpib_options_page() {
+    add_submenu_page(
+		'options-general.php',
+        'Custom Post Image Bucket Settings',
+        'CPIB Bucket Settings',
+        'manage_options',
+        'cpib',
+        'cpib_options_page_html'
+    );
+}
+/**
+ * Register our cpib_options_page to the admin_menu action hook.
+ */
+add_action( 'admin_menu', 'cpib_options_page' );
+
+function cpib_options_page_html() {
+
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    if ( isset( $_GET['settings-updated'] ) ) {
+        add_settings_error( 'cpib_messages', 'cpib_message', __( 'Settings Saved', 'cpib' ), 'updated' );
+    }
+
+    settings_errors( 'cpib_messages' );
+    ?>
+    <div class="wrap">
+        <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+        <form action="options.php" method="post">
+            <?php
+            settings_fields( 'cpib' );
+            do_settings_sections( 'cpib' );
+            submit_button( 'Save Settings' );
+            ?>
+        </form>
+    </div>
+    <?php
+}
