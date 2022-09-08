@@ -8,16 +8,19 @@ class bucket {
 
 	private $s3;
     private $options;
+	private $envtype;
+	private $folder;
 
 	function __construct() {
-		error_log('bucket uploader running', 0);
-        
+
 		require ABSPATH . 'vendor/autoload.php';
 
-        if (!file_exists( ABSPATH . '/tmp/tmpfile')) {
-			mkdir( ABSPATH .'/tmp/tmpfile');
+        if (!file_exists( ABSPATH . '/tmp')) {
+			mkdir( ABSPATH .'/tmp');
 		}
-
+		// check the environment so we don't overwrite images on staging/prod etc.
+		$this->envtype = wp_get_environment_type();
+		$this->folder = ( $this->envtype == 'production' ) ? 'images' : 'dev';
         $this->options = get_option('cpib_options');
 		$this->s3 = new \Aws\S3\S3Client([
 			'region'  => 'ap-south-1',
@@ -30,9 +33,9 @@ class bucket {
 		]);
 	}
 
+	// Upload images to the chosen bucket
     public function upload( $images ) {
-
-		error_log('uploading image started');
+		error_log('uploading images...', 0);
 
 		$json_images = [];
 
@@ -40,22 +43,22 @@ class bucket {
 
 			if( empty( $image ) ) { continue; }
 
-            $arrContextOptions=array(
-                "ssl"=>array(
-                    "verify_peer"=>false,
-                    "verify_peer_name"=>false,
-                ),
-            );  
+            $stream_options = [
+                "ssl" => [
+                    "verify_peer" => false,
+                    "verify_peer_name" => false,
+				],
+			];  
 
 			$filename = basename( $image['image_url'] );
 			$local_path = ABSPATH .'/tmp/tmpfile' . $filename;
-			$file_contents = file_get_contents( $image['image_url'], false, stream_context_create($arrContextOptions) );
+			$file_contents = file_get_contents( $image['image_url'], false, stream_context_create($stream_options) );
 			fopen( $local_path, "w" ) or die( "Error: Unable to open file." );
 			file_put_contents( $local_path, $file_contents );
 
 			$result = $this->s3->putObject([
 				'Bucket' => $this->options['cpib_bucket_name'],
-				'Key'    => 'images/'.$image['post_type'].'/' . $image['property_unique_id']. '/' . $filename,
+				'Key'    => $this->folder . '/' . $image['post_type']. '/' . $image['property_unique_id']. '/' . $filename,
 				'SourceFile' => $local_path,
 				'ACL' => 'public-read'
 			]);
@@ -63,56 +66,49 @@ class bucket {
 			if( $result['@metadata']['effectiveUri'] ) {
 				$url = $result['@metadata']['effectiveUri'];
 				$json_images[$image['post_id']][] = $url;
-				error_log( print_r('image uploaded: ' . $url, true), 0);
+				//error_log( print_r('image uploaded: ' . $url, true), 0);
 			}
 		}
-		error_log('returning json images from ->upload()');
+		error_log('images uploaded.', 0);
 		return $json_images;
-
 	}
     
-	// public function list( $property_id ) {
-	// 	//_el('listing images...');
+	// List all of the images in a folder.
+	public function list( $property_id, $post_type ) {
 
-	// 	$exists = $this->s3->listObjects([
-	// 		'Bucket' => get_option('cpib_bucket_name'),
-	// 		'Prefix' => 'images/rental/'. $property_id
-	// 	]);
+		$exists = $this->s3->listObjects([
+			'Bucket' => $this->options['cpib_bucket_name'],
+			'Prefix' => $this->folder . '/' . $post_type . '/' . $property_id
+		]);
 
-	// 	$found_keys = [];
-	// 	if( is_array( $exists['Contents'] ) ) {
-	// 		foreach ($exists['Contents'] as $key ) {
-	// 			$found_keys[] = $key['Key'];
-	// 		}
-	// 		//_el('found images...');
-	// 		return $found_keys;
-	// 	} else {
-	// 		//_el('no images found to delete.');
-	// 		return false;
-	// 	}
-	// }
+		$found_keys = [];
+		if( is_array( $exists['Contents'] ) ) {
+			foreach ($exists['Contents'] as $key ) {
+				$found_keys[] = $key['Key'];
+			}
+			return $found_keys;
+		} else {
+			return false;
+		}
+	}
 
-	// public function delete( $images ) {
-	// //	_el('deleting images...');
+	public function delete( $images ) {
 
-	// 	foreach ( $images as $image ) {
+		foreach ( $images as $image ) {
 
-	// 		$this->s3->deleteObjects([
-	// 			'Bucket'  => LINODE_BUCKET,
-	// 			'Delete' => [
-	// 				'Objects' => [
-	// 					[
-	// 						'Key' => $image
-	// 					]
-	// 				]
-	// 			]
-	// 		]);
-
-	// 		//_el('deleted ' . $image);
-	// 	}
-
-	// 	return true;
-	// }
+			$this->s3->deleteObjects([
+				'Bucket'  => $this->options['cpib_bucket_name'],
+				'Delete' => [
+					'Objects' => [
+						[
+							'Key' => $image
+						]
+					]
+				]
+			]);
+		}
+		return true;
+	}
 
 }
 

@@ -46,8 +46,9 @@ define( 'CUSTOM_POST_IMAGE_BUCKET_VERSION', '1.0.0' );
  */
 function activate_custom_post_image_bucket() {
 	$plugin = plugin_basename( __FILE__ ); // 'myplugin'
+
     if ( is_plugin_active( 'wp-all-import-pro/wp-all-import-pro.php' ) ) {
-        error_log('plugin is active. Acitivating.', 0);
+
     } else {
         // Plugin was not-active, uh oh, do not allow this plugin to activate
         deactivate_plugins( $plugin ); // Deactivate 'myplugin'

@@ -31,8 +31,7 @@ class queue {
     static function update($row_id, $data){
         global $wpdb;
 
-
-        $wpdb->update($wpdb->prefix.self::$table_name, $data, ['image_id' => $row_id]);
+        $wpdb->update($wpdb->prefix.self::$table_name, $data, ['status' => $status]);
     }
 
     static function get_pending($status){
@@ -45,7 +44,7 @@ class queue {
         return $wpdb->get_results($sql, ARRAY_A);
     }
 
-    static function delete($row_id){
+    static function delete($row_id) {
         global $wpdb;
 
         $table_name = $wpdb->prefix.self::$table_name;
