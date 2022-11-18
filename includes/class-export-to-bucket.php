@@ -48,13 +48,13 @@ class Bucket {
 		$this->options = get_option( 'cpib_options' );
 		$this->s3      = new \Aws\S3\S3Client(
 			array(
-				'region'      => 'ap-south-1',
+				'region'      => $this->options['cpib_region'],
 				'version'     => 'latest',
 				'credentials' => array(
 					'key'    => $this->options['cpib_bucket_access_key'],
 					'secret' => $this->options['cpib_secret_key'],
 				),
-				'endpoint'    => 'https://ap-south-1.linodeobjects.com/',
+				'endpoint'    => $this->options['cpib_bucket_endpoint'],
 			)
 		);
 	}
