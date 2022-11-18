@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       Custom Post Image Bucket
  * Plugin URI:        https://stafflink.com.au/
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Description:       REQUIRES WP ALL IMPORT PRO.
  * Version:           1.0.0
  * Author:            Matthew Neal
  * Author URI:        https://stafflink.com.au/
@@ -31,7 +31,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
-    require __DIR__ . '/vendor/autoload.php';
+	require __DIR__ . '/vendor/autoload.php';
 }
 /**
  * Currently plugin version.
@@ -47,13 +47,10 @@ define( 'CUSTOM_POST_IMAGE_BUCKET_VERSION', '1.0.0' );
 function activate_custom_post_image_bucket() {
 	$plugin = plugin_basename( __FILE__ ); // 'myplugin'
 
-    if ( is_plugin_active( 'wp-all-import-pro/wp-all-import-pro.php' ) ) {
+	if ( ! is_plugin_active( 'wp-all-import-pro/wp-all-import-pro.php' ) ) {
+		deactivate_plugins( $plugin );
+	}
 
-    } else {
-        // Plugin was not-active, uh oh, do not allow this plugin to activate
-        deactivate_plugins( $plugin ); // Deactivate 'myplugin'
-		error_log('plugin wp all import not activated. Could not acivate this one');
-    }
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-custom-post-image-bucket-activator.php';
 	Custom_Post_Image_Bucket_Activator::activate();
 }
