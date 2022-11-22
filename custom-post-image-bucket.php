@@ -30,9 +30,10 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
-	require __DIR__ . '/vendor/autoload.php';
-}
+// if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
+// 	require __DIR__ . '/vendor/autoload.php';
+// }
+require_once plugin_dir_path( __FILE__ ) . '/lib/autoload.php';
 /**
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org

@@ -1,0 +1,24 @@
+{
+    "name": "mattneal/custom-post-image-bucket",
+    "description": "Uploads images from XML data when imported using WP All Import",
+    "type": "library",
+    "require": {
+        "aws/aws-sdk-php": "^3.247"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "CustomPostImageBucket\\": "src/"
+        }
+    },
+    "config": {
+        "platform-check": false,
+        "vendor-dir": "lib"
+    },
+    "authors": [
+        {
+            "name": "Matthew Neal",
+            "email": "matt.neal@stafflink.com.au"
+        }
+    ]
+}

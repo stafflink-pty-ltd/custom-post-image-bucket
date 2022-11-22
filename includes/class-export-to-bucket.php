@@ -8,27 +8,27 @@ namespace cpib;
 class Bucket {
 
 	/**
-	 * Undocumented variable
+	 * The S3 Bucket object.
 	 *
-	 * @var [type]
+	 * @var object
 	 */
 	private $s3;
 	/**
-	 * Undocumented variable
+	 * Options from the DB to configure the plugin.
 	 *
-	 * @var [type]
+	 * @var array
 	 */
 	private $options;
 	/**
-	 * Undocumented variable
+	 * Change directory based on environment.
 	 *
-	 * @var [type]
+	 * @var string
 	 */
 	private $envtype;
 	/**
-	 * Undocumented variable
+	 * Folder to upload to.
 	 *
-	 * @var [type]
+	 * @var string
 	 */
 	private $folder;
 
@@ -36,8 +36,6 @@ class Bucket {
 	 * Constructor!
 	 */
 	public function __construct() {
-
-		require ABSPATH . 'vendor/autoload.php';
 
 		if ( ! file_exists( ABSPATH . '/tmp' ) ) {
 			mkdir( ABSPATH . '/tmp' );
@@ -62,8 +60,8 @@ class Bucket {
 	/**
 	 * Upload images to the chosen bucket.
 	 *
-	 * @param [type] $images
-	 * @return void
+	 * @param array $images An array of images to be uploaded.
+	 * @return array $json_images to be saved in custom field on post.
 	 */
 	public function upload( $images ) {
 
@@ -103,16 +101,15 @@ class Bucket {
 				$json_images[ $image['post_id'] ][] = $url;
 			}
 		}
-		error_log( 'images uploaded.', 0 );
 		return $json_images;
 	}
 
 	/**
 	 * List all of the images in a folder.
 	 *
-	 * @param [type] $property_id
-	 * @param [type] $post_type
-	 * @return void
+	 * @param string $property_id The ID Of the property.
+	 * @param string $post_type The post type.
+	 * @return array|false Returns an array of objects, or false on failure.
 	 */
 	public function list( $property_id, $post_type ) {
 
@@ -136,10 +133,10 @@ class Bucket {
 	}
 
 	/**
-	 * Undocumented function
+	 * Delete images from bucket.
 	 *
-	 * @param [type] $images
-	 * @return void
+	 * @param array $images An array of images for deletion from bucket.
+	 * @return bool True on success, False on fail.
 	 */
 	public function delete( $images ) {
 
