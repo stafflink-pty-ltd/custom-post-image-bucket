@@ -1,9 +1,10 @@
 {
-    "name": "mattneal/custom-post-image-bucket",
+    "name": "stafflink-pty-ltd/custom-post-image-bucket",
     "description": "Uploads images from XML data when imported using WP All Import",
     "type": "library",
     "require": {
-        "aws/aws-sdk-php": "^3.247"
+        "aws/aws-sdk-php": "^3.247",
+        "php": ">=5.3.0"
     },
     "license": "MIT",
     "autoload": {
@@ -20,5 +21,6 @@
             "name": "Matthew Neal",
             "email": "matt.neal@stafflink.com.au"
         }
-    ]
+    ],
+    "minimum-stability": "dev"
 }
