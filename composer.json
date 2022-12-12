@@ -1,7 +1,7 @@
 {
     "name": "stafflink-pty-ltd/custom-post-image-bucket",
     "description": "Uploads images from XML data when imported using WP All Import",
-    "type": "library",
+    "type": "wordpress-plugin",
     "require": {
         "aws/aws-sdk-php": "^3.247",
         "php": ">=5.3.0"
