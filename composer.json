@@ -22,5 +22,5 @@
             "email": "matt.neal@stafflink.com.au"
         }
     ],
-    "minimum-stability": "dev"
+    "minimum-stability": "stable"
 }
