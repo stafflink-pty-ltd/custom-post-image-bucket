@@ -55,18 +55,21 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 	$pending_rows = $queue->get_pending( 'pending' );
 	$json_images  = $bucket->upload( $pending_rows );
 
-	foreach ( $json_images as $key => $value ) {
-		foreach ( $value as $image_url ) {
-			$row = array( 'image' => $image_url );
-			add_row( 'image_repeater', $row, $key );
+	if ( get_field('image_repeater' ) ) {
+		error_log('repeater field exists, adding there', 0);
+		foreach ( $json_images as $key => $value ) {
+			foreach ( $value as $image_url ) {
+				add_row( 'image_repeater', array( 'image' => $image_url ), $key );
+			}
 		}
+	} else {
+		update_post_meta( $post_id, 'cpib_property_images', $json_images );
 	}
 
 	// delete entries from the db.
 	foreach ( $pending_rows as $row ) {
 		$queue->delete( $row['id'] );
 	}
-
 }
 add_action( 'pmxi_saved_post', 'cpib_import_images', 10, 3 );
 
@@ -74,7 +77,7 @@ add_action( 'pmxi_saved_post', 'cpib_import_images', 10, 3 );
  * Clean out the tmp file
  */
 function after_xml_import() {
-
+	error_log('deleting files', 0);
 	$files = list_files( ABSPATH . '/tmp', 2 );
 	foreach ( $files as $file ) {
 		if ( is_file( $file ) ) {
