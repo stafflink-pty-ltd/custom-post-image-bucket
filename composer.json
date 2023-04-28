@@ -4,7 +4,7 @@
     "type": "wordpress-plugin",
     "require": {
         "aws/aws-sdk-php": "^3.247",
-        "php": ">=5.3.0"
+        "composer/installers": "~1.0 || ^2.0"
     },
     "license": "MIT",
     "autoload": {
@@ -14,7 +14,10 @@
     },
     "config": {
         "platform-check": false,
-        "vendor-dir": "lib"
+        "vendor-dir": "lib",
+        "allow-plugins": {
+            "composer/installers": true
+        }
     },
     "authors": [
         {
@@ -22,5 +25,8 @@
             "email": "matt.neal@stafflink.com.au"
         }
     ],
-    "minimum-stability": "stable"
+    "minimum-stability": "stable",
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.7"
+    }
 }

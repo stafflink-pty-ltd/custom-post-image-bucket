@@ -264,6 +264,13 @@ class ClientResolver
             'doc'       => 'Set to false to disable checking for shared aws config files usually located in \'~/.aws/config\' and \'~/.aws/credentials\'.  This will be ignored if you set the \'profile\' setting.',
             'default'   => true,
         ],
+        'suppress_php_deprecation_warning' => [
+            'type'      => 'value',
+            'valid'     => ['bool'],
+            'doc'       => 'Set to false to disable the deprecation warning of PHP versions 7.2.4 and below',
+            'default'   => false,
+            'fn'        => [__CLASS__, '_apply_suppress_php_deprecation_warning']
+        ],
     ];
 
     /**
@@ -683,12 +690,15 @@ class ClientResolver
 
             $args['endpoint'] = $result['endpoint'];
 
-            if (
-                empty($args['config']['signature_version'])
-                && isset($result['signatureVersion'])
-            ) {
-                $args['config']['signature_version']
-                    = $result['signatureVersion'];
+            if (empty($args['config']['signature_version'])) {
+                if (
+                    isset($args['api'])
+                    && $args['api']->getSignatureVersion() == 'bearer'
+                ) {
+                    $args['config']['signature_version'] = 'bearer';
+                } elseif (isset($result['signatureVersion'])) {
+                    $args['config']['signature_version'] = $result['signatureVersion'];
+                }
             }
 
             if (
@@ -928,6 +938,21 @@ class ClientResolver
                 IdempotencyTokenMiddleware::wrap($args['api'], $generator),
                 'idempotency_auto_fill'
             );
+        }
+    }
+
+    public static function _apply_suppress_php_deprecation_warning($suppressWarning, array &$args) {
+        if ($suppressWarning) {
+            $args['suppress_php_deprecation_warning'] = true;
+        } elseif (!empty($_ENV["AWS_SUPPRESS_PHP_DEPRECATION_WARNING"])) {
+            $args['suppress_php_deprecation_warning'] =
+                $_ENV["AWS_SUPPRESS_PHP_DEPRECATION_WARNING"];
+        } elseif (!empty($_SERVER["AWS_SUPPRESS_PHP_DEPRECATION_WARNING"])) {
+            $args['suppress_php_deprecation_warning'] =
+                $_SERVER["AWS_SUPPRESS_PHP_DEPRECATION_WARNING"];
+        } elseif (!empty(getenv("AWS_SUPPRESS_PHP_DEPRECATION_WARNING"))) {
+            $args['suppress_php_deprecation_warning']
+                = getenv("AWS_SUPPRESS_PHP_DEPRECATION_WARNING");
         }
     }
 

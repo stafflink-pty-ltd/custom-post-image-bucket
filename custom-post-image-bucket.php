@@ -16,7 +16,7 @@
  * Plugin Name:       Custom Post Image Bucket
  * Plugin URI:        https://stafflink.com.au/
  * Description:       REQUIRES WP ALL IMPORT PRO.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Matthew Neal
  * Author URI:        https://stafflink.com.au/
  * License:           GPL-2.0+
@@ -30,16 +30,16 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-// if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
-// 	require __DIR__ . '/vendor/autoload.php';
-// }
-require_once plugin_dir_path( __FILE__ ) . '/lib/autoload.php';
+if ( is_readable( __DIR__ . '/lib/autoload.php' ) ) {
+	require __DIR__ . '/lib/autoload.php';
+}
+
 /**
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'CUSTOM_POST_IMAGE_BUCKET_VERSION', '1.0.0' );
+define( 'CUSTOM_POST_IMAGE_BUCKET_VERSION', '1.0.1' );
 
 /**
  * The code that runs during plugin activation.

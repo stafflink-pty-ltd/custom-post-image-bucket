@@ -10,14 +10,40 @@
  */
 function cpib_import_images( $post_id, $xml_node, $is_update ) {
 
+	// Check if the image should be updated.
 	$post_object = get_post( $post_id );
 	$update      = epl_wpimport_is_image_to_update( $is_update, (array) $post_object, $xml_node );
-	$options     = array_map( 'intval', explode( ',', get_option( 'cpib_options' )['cpib_importer_ids'] ) );
-	$import_id   = ( isset( $_GET['id'] ) ? $_GET['id'] : ( isset( $_GET['import_id'] ) ? $_GET['import_id'] : 'new' ) );
-	$post_type   = 'post';
 
-	// exit early.
-	if ( false === $update || ! in_array( (int) $import_id, $options, true ) || empty( (string) $xml_node->uniqueID ) ) {
+	// Exit early if the image should not be updated.
+	if ( false === $update ) {
+		return false;
+	}
+
+	// Get the Import ID's as a string and convert to an array.
+	$import_ids = get_option( 'cpib_options' )['cpib_importer_ids'];
+	$import_ids = explode( ',', $import_ids );
+	$options    = array_map( 'intval', $import_ids );
+
+	// Get the import ID	
+	if ( isset( $_GET['id'] ) ) {
+		$import_id = $_GET['id'];
+	} elseif ( isset( $_GET['import_id'] ) ) {
+		$import_id = $_GET['import_id'];
+	} else {
+		$import_id = 'new';
+	}
+	
+	// If the import ID isn't in the options, exit early.
+	if ( ! in_array( (int) $import_id, $options, true ) ) {
+		error_log('import_id not in options. Exiting.', 0);
+		return false;
+	}
+
+	$post_type = 'post';
+	$acf_repeater = 'image_repeater';
+
+	// If this doesn't have a property ID, exit.
+	if ( empty( (string) $xml_node->uniqueID ) ) {
 		return false;
 	}
 
@@ -55,14 +81,18 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 	$pending_rows = $queue->get_pending( 'pending' );
 	$json_images  = $bucket->upload( $pending_rows );
 
-	if ( get_field('image_repeater' ) ) {
+	// TODO: update this input to be an option on the options page.
+	$exists = is_field_group_exists( 'Image Repeater' );
+
+	if ( $exists ) {
 		error_log('repeater field exists, adding there', 0);
 		foreach ( $json_images as $key => $value ) {
 			foreach ( $value as $image_url ) {
-				add_row( 'image_repeater', array( 'image' => $image_url ), $key );
+				add_row( $acf_repeater, array( 'image' => $image_url ), $key );
 			}
 		}
 	} else {
+		error_log( ' repeater field doesnt exist. Updating cpib_property_images', 0);
 		update_post_meta( $post_id, 'cpib_property_images', $json_images );
 	}
 
@@ -74,11 +104,15 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 add_action( 'pmxi_saved_post', 'cpib_import_images', 10, 3 );
 
 /**
- * Clean out the tmp file
+ * Hook into the after_xml_import action and delete temporarily downloaded images.
+ *
+ * @return void
  */
 function after_xml_import() {
-	error_log('deleting files', 0);
-	$files = list_files( ABSPATH . '/tmp', 2 );
+
+	// Array of all the files in the tmp directory.
+	$files = list_files( WP_CONTENT_DIR . '/cpib-uploads', 2 );
+
 	foreach ( $files as $file ) {
 		if ( is_file( $file ) ) {
 			wp_delete_file( $file );
@@ -86,3 +120,30 @@ function after_xml_import() {
 	}
 }
 add_action( 'pmxi_after_xml_import', 'after_xml_import', 10, 2 );
+
+/**
+ * Check if an ACF Field has been registered or exists or not.
+ *
+ * @param string $value title of the field group
+ * 
+ * Example: $exists = is_field_group_exists( 'Image Repeater' );
+ * @return boolean
+ */
+function is_field_group_exists( $value ) {
+
+	$exists = false;
+	$args = array(
+		'post_type' => 'acf-field',
+		'posts_per_page' => -1
+	);
+	$field_groups = get_posts( $args );
+
+	if ( $field_groups  ) {
+		foreach ( $field_groups as $field_group ) {
+			if ( $field_group->post_title == $value ) {
+				$exists = true;
+			}
+		}
+	}
+	return $exists;
+}

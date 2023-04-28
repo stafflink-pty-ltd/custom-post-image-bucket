@@ -37,12 +37,12 @@ class Bucket {
 	 */
 	public function __construct() {
 
-		if ( ! file_exists( ABSPATH . '/tmp' ) ) {
-			mkdir( ABSPATH . '/tmp' );
+		// Create the temporary folder if it doesn't exist.
+		if ( ! file_exists( WP_CONTENT_DIR . '/cpib-uploads' ) ) {
+			mkdir( WP_CONTENT_DIR . '/cpib-uploads' );
 		}
 		// check the environment so we don't overwrite images on staging/prod etc.
-		$this->envtype = wp_get_environment_type();
-		$this->folder  = ( 'production' === $this->envtype ) ? 'images' : 'dev';
+		$this->folder  = ( 'production' === wp_get_environment_type() ) ? 'images' : 'dev';
 		$this->options = get_option( 'cpib_options' );
 		$this->s3      = new \Aws\S3\S3Client(
 			array(
@@ -81,7 +81,7 @@ class Bucket {
 			);
 
 			$filename      = basename( $image['image_url'] );
-			$local_path    = ABSPATH . 'tmp/' . $filename;
+			$local_path    = WP_CONTENT_DIR . '/cpib-uploads/' . $filename;
 			$file_contents = file_get_contents( $image['image_url'], false, stream_context_create( $stream_options ) );
 
 			fopen( $local_path, 'w' ) || die( 'Error: Unable to open file.' );
