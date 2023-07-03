@@ -129,11 +129,8 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 		foreach ( $json_images as $key => $value ) {
 			foreach ( $value as $type => $image_url ) {
 				if ( $type == 'floorplan' ) {
-					var_dump($image_url);
-					var_dump(count($image_url));
 					for ($i = 0; $i < count($image_url); $i++) {
 						$meta_key = ($i == 0) ? 'property_floorplan' : 'property_floorplan_' . ($i + 1);
-						var_dump($meta_key);
 						update_post_meta($post_id, $meta_key, $image_url[$i]);
 					}
 				}else {
