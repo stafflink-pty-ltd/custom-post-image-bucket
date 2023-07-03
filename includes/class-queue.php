@@ -30,10 +30,11 @@ class Queue {
 	 * @param [type] $image_url
 	 * @param [type] $image_modtime
 	 * @param [type] $post_type
+	 * @param [type] $image_type = image | floorplan
 	 * @param [type] $status
 	 * @return void
 	 */
-	public static function insert( $post_id, $image_id, $property_unique_id, $image_url, $image_modtime, $post_type, $status = self::STATUS_PENDING ) {
+	public static function insert( $post_id, $image_id, $property_unique_id, $image_url, $image_modtime, $post_type, $image_type = 'image', $status = self::STATUS_PENDING ) {
 		global $wpdb;
 
 		$wpdb->insert(
@@ -45,6 +46,7 @@ class Queue {
 				'image_url'          => $image_url,
 				'image_modtime'      => $image_modtime,
 				'post_type'          => $post_type,
+				'image_type'         => $image_type,
 				'status'             => $status,
 			)
 		);
@@ -71,12 +73,12 @@ class Queue {
 	 * @param [type] $status
 	 * @return void
 	 */
-	public static function get_pending( $status ) {
+	public static function get_pending( $status, $image_type = 'image' ) {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . self::$table_name;
 
-		$sql = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE `status` = %s", $status );
+		$sql = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE `status` = %s AND `image_type` = %s", $status, $image_type);
 
 		return $wpdb->get_results( $sql, ARRAY_A );
 	}
