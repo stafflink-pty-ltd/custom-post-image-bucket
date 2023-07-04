@@ -156,13 +156,13 @@ add_action( 'pmxi_saved_post', 'cpib_import_images', 10, 3 );
  * @return void
  */
 function after_xml_import() {
-
+	$path = WP_CONTENT_DIR . '/uploads/cpib-uploads';
 	// Array of all the files in the tmp directory.
-	$files = scandir( WP_CONTENT_DIR . '/uploads/cpib-uploads');
+	$files = scandir($path);
 
 	foreach ( $files as $file ) {
-		if ( is_file( $file ) ) {
-			wp_delete_file( $file );
+		if ( is_file( $path .'/'. $file ) ) {
+			wp_delete_file( $path .'/'. $file );
 		}
 	}
 }
