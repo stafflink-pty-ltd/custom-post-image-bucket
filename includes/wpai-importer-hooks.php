@@ -61,24 +61,26 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 
 	$images = $xml_node->objects->img; // Rex Softare version.
 
-	$floorpans = $xml_node->objects->floorplan;
+	$floorpans = $xml_node->objects->floorplan ?? '';
 	
 	if ( empty( $images ) ) {
-		$images = $xml_node->images->img; // Property ME version.
+		$images = $xml_node->images->img ?? ''; // Property ME version.
 	}
 
 	foreach($floorpans as $floorplan) {
-		if ( ! empty( $floorplan->attributes()->url ) ) {
-			$queue->insert(
-				$post_id,
-				(string) $floorplan->attributes()->id,
-				(string) $xml_node->uniqueID,
-				(string) $floorplan->attributes()->url,
-				(string) $floorplan->attributes()->modTime,
-				$post_type,
-				'floorplan'
-			);
-		}
+
+		// exit early if no floor plan found. 
+		if ( empty( $floorplan->attributes()->url ) ) continue;
+		$queue->insert(
+			$post_id,
+			(string) $floorplan->attributes()->id,
+			(string) $xml_node->uniqueID,
+			(string) $floorplan->attributes()->url,
+			(string) $floorplan->attributes()->modTime,
+			$post_type,
+			'floorplan'
+		);
+
 	}
 	// Insert each image into the database for processing.
 	foreach ( $images as $image ) {
