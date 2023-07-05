@@ -38,8 +38,8 @@ class Bucket {
 	public function __construct() {
 
 		// Create the temporary folder if it doesn't exist.
-		if ( ! file_exists( WP_CONTENT_DIR . '/cpib-uploads' ) ) {
-			mkdir( WP_CONTENT_DIR . '/cpib-uploads' );
+		if ( ! file_exists( WP_CONTENT_DIR . '/uploads/cpib-uploads' ) ) {
+			mkdir( WP_CONTENT_DIR . '/uploads/cpib-uploads' );
 		}
 		// check the environment so we don't overwrite images on staging/prod etc.
 		$this->folder  = ( 'production' === wp_get_environment_type() ) ? 'images' : 'dev';
@@ -56,53 +56,58 @@ class Bucket {
 			)
 		);
 	}
-
 	/**
-	 * Upload images to the chosen bucket.
+	 * Uploads images to AWS S3 and returns an array of uploaded image URLs.
 	 *
-	 * @param array $images An array of images to be uploaded.
-	 * @return array $json_images to be saved in custom field on post.
+	 * @param array $images An array containing image details to be uploaded.
+	 *
+	 * @return array An array of uploaded image URLs.
 	 */
-	public function upload( $images ) {
-
+	public function upload($images)
+	{
 		$json_images = array();
 
-		foreach ( $images as $image ) {
-
-			if ( empty( $image ) ) {
+		foreach ($images as $image) {
+			if (empty($image)) {
 				continue;
 			}
 
 			$stream_options = array(
 				'ssl' => array(
-					'verify_peer'      => false,
+					'verify_peer' => false,
 					'verify_peer_name' => false,
 				),
 			);
 
-			$filename      = basename( $image['image_url'] );
-			$local_path    = WP_CONTENT_DIR . '/cpib-uploads/' . $filename;
-			$file_contents = file_get_contents( $image['image_url'], false, stream_context_create( $stream_options ) );
-
-			fopen( $local_path, 'w' ) || die( 'Error: Unable to open file.' );
-			file_put_contents( $local_path, $file_contents );
-
-			$result = $this->s3->putObject(
-				array(
-					'Bucket'     => $this->options['cpib_bucket_name'],
-					'Key'        => $this->folder . '/' . $image['post_type'] . '/' . $image['property_unique_id'] . '/' . $filename,
-					'SourceFile' => $local_path,
-					'ACL'        => 'public-read',
-				)
-			);
-
-			if ( $result['@metadata']['effectiveUri'] ) {
-				$url                                = $result['@metadata']['effectiveUri'];
-				$json_images[ $image['post_id'] ][] = $url;
+			$filename = basename($image['image_url']);
+			$local_path = WP_CONTENT_DIR . '/uploads/cpib-uploads/' . $filename;
+			
+			// Fetch image from URL
+			$file_contents = file_get_contents($image['image_url'], false, stream_context_create($stream_options));
+			
+			// Save image locally
+			$file_saved = file_put_contents($local_path, $file_contents);
+			if ( ! $file_saved ) { 
+				error_log('file could not be saved locally, skipping.', 0); 
+				continue; 
 			}
+
+			$result = $this->s3->putObject(array(
+				'Bucket' => $this->options['cpib_bucket_name'],
+				'Key' => $this->folder . '/' . $image['post_type'] . '/' . $image['property_unique_id'] . '/' . $filename,
+				'SourceFile' => $local_path,
+				'ACL' => 'public-read',
+			));
+		
+			if ($result['@metadata']['effectiveUri']) {
+				$url = $result['@metadata']['effectiveUri'];
+				$json_images[$image['post_id']][$image['image_type']][] = $url;
+			}
+
 		}
 		return $json_images;
 	}
+
 
 	/**
 	 * List all of the images in a folder.

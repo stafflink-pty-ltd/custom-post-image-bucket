@@ -22,6 +22,7 @@ $sql =
         `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `status` enum('cancel', 'fail', 'pending','done') DEFAULT NULL,
         `post_type` text NULL,
+        `image_type` text NULL,
         `import_id` text NOT NULL,
         PRIMARY KEY  (id)
     )

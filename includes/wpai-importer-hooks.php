@@ -60,10 +60,28 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 	$bucket = new cpib\Bucket();
 
 	$images = $xml_node->objects->img; // Rex Softare version.
+
+	$floorpans = $xml_node->objects->floorplan ?? '';
+	
 	if ( empty( $images ) ) {
-		$images = $xml_node->images->img; // Property ME version.
+		$images = $xml_node->images->img ?? ''; // Property ME version.
 	}
 
+	foreach($floorpans as $floorplan) {
+
+		// exit early if no floor plan found. 
+		if ( empty( $floorplan->attributes()->url ) ) continue;
+		$queue->insert(
+			$post_id,
+			(string) $floorplan->attributes()->id,
+			(string) $xml_node->uniqueID,
+			(string) $floorplan->attributes()->url,
+			(string) $floorplan->attributes()->modTime,
+			$post_type,
+			'floorplan'
+		);
+
+	}
 	// Insert each image into the database for processing.
 	foreach ( $images as $image ) {
 		if ( ! empty( $image->attributes()->url ) ) {
@@ -73,27 +91,58 @@ function cpib_import_images( $post_id, $xml_node, $is_update ) {
 				(string) $xml_node->uniqueID,
 				(string) $image->attributes()->url,
 				(string) $image->attributes()->modTime,
-				$post_type
+				$post_type,
+				'image'
 			);
 		}
 	}
 
-	$pending_rows = $queue->get_pending( 'pending' );
-	$json_images  = $bucket->upload( $pending_rows );
 
+	$pending_image_rows = $queue->get_pending( 'pending', 'image');
+	$pending_floorplan_rows = $queue->get_pending( 'pending', 'floorplan' );
+	
+	//merge arrays so that they are processed together.
+	$pending_rows = array_merge( $pending_image_rows, $pending_floorplan_rows );
+
+	// Download images to local and Upload the images to the bucket.
+	$json_images  = $bucket->upload( $pending_rows );
 	// TODO: update this input to be an option on the options page.
 	$exists = is_field_group_exists( 'Image Repeater' );
 
 	if ( $exists ) {
 		error_log('repeater field exists, adding there', 0);
 		foreach ( $json_images as $key => $value ) {
-			foreach ( $value as $image_url ) {
-				add_row( $acf_repeater, array( 'image' => $image_url ), $key );
+			foreach ( $value as $type => $image_url ) {
+				if ( $type == 'floorplan' ) {
+					for ($i = 0; $i < count($image_url); $i++) {
+						$meta_key = ($i == 0) ? 'property_floorplan' : 'property_floorplan_' . ($i + 1);
+						update_post_meta($post_id, $meta_key, $image_url[$i]);
+					}
+				}else {
+					foreach ( $image_url as $image ) {
+						add_row( $acf_repeater, array( 'image' => $image ), $post_id );
+					}
+				}
 			}
 		}
 	} else {
 		error_log( ' repeater field doesnt exist. Updating cpib_property_images', 0);
-		update_post_meta( $post_id, 'cpib_property_images', $json_images );
+		$image_lists = array();
+		foreach ( $json_images as $key => $value ) {
+			foreach ( $value as $type => $image_url ) {
+				if ( $type == 'floorplan' ) {
+					for ($i = 0; $i < count($image_url); $i++) {
+						$meta_key = ($i == 0) ? 'property_floorplan' : 'property_floorplan_' . ($i + 1);
+						update_post_meta($post_id, $meta_key, $image_url[$i]);
+					}
+				}else {
+					foreach ( $image_url as $image ) {
+						$image_lists[$post_id][] = $image;
+					}
+				}
+			}
+		}
+		update_post_meta( $post_id, 'cpib_property_images', $image_lists );
 	}
 
 	// delete entries from the db.
@@ -109,13 +158,13 @@ add_action( 'pmxi_saved_post', 'cpib_import_images', 10, 3 );
  * @return void
  */
 function after_xml_import() {
-
+	$path = WP_CONTENT_DIR . '/uploads/cpib-uploads';
 	// Array of all the files in the tmp directory.
-	$files = list_files( WP_CONTENT_DIR . '/cpib-uploads', 2 );
+	$files = scandir($path);
 
 	foreach ( $files as $file ) {
-		if ( is_file( $file ) ) {
-			wp_delete_file( $file );
+		if ( is_file( $path .'/'. $file ) ) {
+			wp_delete_file( $path .'/'. $file );
 		}
 	}
 }
@@ -136,8 +185,8 @@ function is_field_group_exists( $value ) {
 		'post_type' => 'acf-field',
 		'posts_per_page' => -1
 	);
+	// issue - does not show acf field group added via php acf_add_local_field_group()
 	$field_groups = get_posts( $args );
-
 	if ( $field_groups  ) {
 		foreach ( $field_groups as $field_group ) {
 			if ( $field_group->post_title == $value ) {
