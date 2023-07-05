@@ -40,6 +40,11 @@ directory take precedence. For example, `/assets/screenshot-1.png` would win ove
 
 == Changelog ==
 
+= 1.0.3 =
+* Add floorplan to the list of images uploaded.
+* Move cpib-uploads to the uploads directory.
+* Change list_files() to scandir() to get the list of files in the cpib-uploads
+
 = 1.0 =
 * A change since the previous version.
 * Another change.
